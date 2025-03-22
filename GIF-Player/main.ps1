@@ -8,21 +8,6 @@ $gifPath = "$env:temp/g.gif"
 iwr -Uri $url -OutFile $gifPath
 $ErrorActionPreference = 'Stop'
 
-# Création de l'icône pour le System Tray
-$trayIcon = New-Object System.Windows.Forms.NotifyIcon
-$trayIcon.Icon = [System.Drawing.SystemIcons]::Information
-$trayIcon.Visible = $true
-$trayIcon.Text = "GIF en arrière-plan"
-
-# Création du menu contextuel (clic droit sur l'icône)
-$menu = New-Object System.Windows.Forms.ContextMenu
-$exitItem = New-Object System.Windows.Forms.MenuItem "Quitter"
-$menu.MenuItems.Add($exitItem)
-$trayIcon.ContextMenu = $menu
-
-# Variable pour stocker le processus du GIF
-$script:gifProcess = $null
-
 # Fonction pour afficher le GIF en boucle et empêcher sa fermeture
 function Show-Gif {
     while ($true) {
@@ -54,31 +39,11 @@ function Show-Gif {
 
         $form.Controls.Add($pictureBox)
         $form.Add_Shown({ $timer.Start() })
-        $script:gifProcess = $form
 
         # Affiche le GIF (bloquant)
         $form.ShowDialog()
     }
 }
 
-# Clic gauche sur l'icône pour afficher le GIF
-$trayIcon.Add_MouseClick({
-    param($sender, $e)
-    if ($e.Button -eq [System.Windows.Forms.MouseButtons]::Left) {
-        Start-Job -ScriptBlock { Show-Gif }
-    }
-})
-
-# Clic droit sur "Quitter" pour fermer
-$exitItem.Add_Click({
-    $trayIcon.Dispose()
-    Stop-Job -Name "Show-Gif" -ErrorAction SilentlyContinue
-    Remove-Item $gifPath -ErrorAction SilentlyContinue
-    exit
-})
-
 # Lancer le GIF immédiatement
-Start-Job -ScriptBlock { Show-Gif }
-
-# Exécution en arrière-plan
-[System.Windows.Forms.Application]::Run()
+Show-Gif
